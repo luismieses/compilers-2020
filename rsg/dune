@@ -1,0 +1,3 @@
+(executables
+(names rsg)
+(libraries csv))
