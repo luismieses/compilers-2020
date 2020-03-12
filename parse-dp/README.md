@@ -2,9 +2,9 @@
 
 Here's a sample parser for depython. You'll need to modify 3 files to complete your assignment:
 
-lexer.mll
-parser.mly
-syntax.ml
+* lexer.mll
+* parser.mly
+* syntax.ml
 
 To test your parser, you can use the parse function defined in main.
 
