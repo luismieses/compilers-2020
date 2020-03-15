@@ -24,6 +24,7 @@ type instruction =
   | ICmp of arg * arg
   | IJe of string
   | ILabel of string
+  | IJump of string
 
 type env = (string * int) list
 
@@ -47,7 +48,7 @@ let rec asm_to_string (asm : instruction list) : string =
   | ICmp (arg1, arg2)::tail -> "cmp " ^ arg_to_string arg1 ^ ", " ^ arg_to_string arg2 ^ "\n" ^ asm_to_string tail
   | IJe label::tail -> "je " ^ label ^ "\n" ^ asm_to_string tail
   | ILabel label::tail -> label ^ ":\n" ^ asm_to_string tail
-
+  | IJump label::tail -> "jmp " ^ label ^ "\n" ^ asm_to_string tail
 
 let rec lookup name env =
   match env with
@@ -60,6 +61,12 @@ let add name env =
   let slot = 1 + (List.length env) in
   ((name,slot)::env, slot)
 ;;
+
+let gensym =
+  let counter = ref 0 in
+  (fun basename ->
+    counter := !counter + 1;
+    sprintf "%s_%d" basename !counter);;
 
 (* compile is responsible for compiling just a single expression,
    and does not care about the surrounding scaffolding *)
@@ -83,7 +90,12 @@ let rec compile (e : expr) (env : env) : instruction list =
      let done_label = gensym "done" in
      compile e1 env
      @ [ ICmp (Reg(RAX), Const(0L)) ;
-         IJe (else_label) ]
+         IJe (else_label) ] @
+       compile e2 env
+       @ [ IJump done_label ]
+       @ [ ILabel else_label ]
+       @ compile e3 env
+       @ [ ILabel done_label ]
 
 (* compile_prog surrounds a compiled program by whatever scaffolding is needed *)
 let compile_prog (e : expr) : string =
