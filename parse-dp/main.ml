@@ -5,6 +5,7 @@ let parse s =
   let ast = Parser.main Lexer.token lexbuf in
   ast
 
+(* commented out so you don't have to rewrite the pretty printer, use parse instead.
 let ast_test infile =
    let lexbuf = Lexing.from_channel infile in
    let loop () =
@@ -23,3 +24,4 @@ let _ =
          with (Failure f) ->
             Printf.fprintf stderr "\nERROR: %s\n" f;
          close_in infile
+*)
