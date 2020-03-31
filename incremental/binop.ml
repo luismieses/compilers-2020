@@ -86,6 +86,25 @@ let rec is_anf e =
   | If (cond, thn, els) -> is_imm cond && is_anf thn && is_anf els
   | _ -> is_imm e 
 
+let rec anf_v1 e =
+  match e with
+  | Add1 e1 ->
+    let (e1_ans, e1_context) = anf_v1 e1 in
+    let temp = gensym "add1" in
+    (Id(temp), (* the answer *)
+     e1_context @ (* the context needed for the left answer to make sense *)
+     [(temp, Add1(e1_ans))]) (* definition of the answer *)
+  | Num _ -> (e, [])
+
+let rec anf_helper e context =
+  match context with
+  | [] -> e
+  | (id, e2) :: tail -> Let (id, e2, anf_helper e tail)
+
+let anf (e : expr) : expr =
+  let (e, context ) = anf_v1 e in
+    anf_helper e context
+
 (* compile is responsible for compiling just a single expression,
    and does not care about the surrounding scaffolding *)
 let rec compile (e : expr) (env : env) : instruction list =
