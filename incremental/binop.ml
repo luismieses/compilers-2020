@@ -101,6 +101,16 @@ let rec anf_v1 e =
      let (right_ans, right_context) = anf_v1 e2 in
      let temp = gensym "binop" in
        (Id(temp), left_context @ right_context @ [(temp, BinOp (left_ans, op, right_ans))])
+  | If (con, thn, els) ->
+     let (con_ans, con_context) = anf_v1 con in
+     let (thn_ans, thn_context) = anf_v1 thn in
+     let (els_ans, els_context) = anf_v1 els in
+     let cond_tmp = gensym "cond" in
+      (Let (cond_tmp, con_ans, If (Id cond_tmp, thn_ans, els_ans) ),
+       thn_context @
+       els_context @
+       con_context)
+(* if 3 - 2: 1 else 2  -> let cond_1 = 3 -2 in if cond_1:  1 else 2 *)
   | Num _ -> (e, [])
 
 let rec anf_helper e context =
