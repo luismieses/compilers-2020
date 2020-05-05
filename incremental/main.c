@@ -16,15 +16,15 @@ SNAKEVAL print(SNAKEVAL val) {
   } else if (val == BOOL_FALSE) {
     printf("false\n");
   } else {
-    printf("Unknown value: %" PRIx64 "\n", val); // print unknown val in hex
+    printf("Unknown value: 0x%016" PRIx64 "\n", val); // print unknown val in hex
   }
   return val;
 }
 
-extern int our_code_starts_here() asm("our_code_starts_here");
+extern SNAKEVAL our_code_starts_here() asm("our_code_starts_here");
 
 int main(int argc, char** argv) {
-  int result = our_code_starts_here();
+  SNAKEVAL result = our_code_starts_here();
   print(result);
   return 0;
 }
