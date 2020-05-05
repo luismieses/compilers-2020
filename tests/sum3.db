@@ -1,0 +1,4 @@
+def sum3(x, y, z):
+  x + y + x
+
+sum3(4, 5, 6)
