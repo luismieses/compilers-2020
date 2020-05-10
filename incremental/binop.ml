@@ -15,6 +15,7 @@ type expr =
 type reg = 
   | RSP                         (* Stack pointer *)
   | RAX
+  | RBX
 
 type arg = 
   | Const of int64
@@ -35,6 +36,7 @@ let reg_to_string reg =
   match reg with
   | RAX -> "RAX"
   | RSP -> "RSP"
+  | RBX -> "RBX"
 
 let arg_to_string arg =
   match arg with
@@ -94,6 +96,21 @@ let rec anf_v1 e =
     (Id(temp), (* the answer *)
      e1_context @ (* the context needed for the left answer to make sense *)
      [(temp, Add1(e1_ans))]) (* definition of the answer *)
+  | BinOp (e1, op, e2) ->
+     let (left_ans, left_context) = anf_v1 e1 in
+     let (right_ans, right_context) = anf_v1 e2 in
+     let temp = gensym "binop" in
+       (Id(temp), left_context @ right_context @ [(temp, BinOp (left_ans, op, right_ans))])
+  | If (con, thn, els) ->
+     let (con_ans, con_context) = anf_v1 con in
+     let (thn_ans, thn_context) = anf_v1 thn in
+     let (els_ans, els_context) = anf_v1 els in
+     let cond_tmp = gensym "cond" in
+      (Let (cond_tmp, con_ans, If (Id cond_tmp, thn_ans, els_ans) ),
+       thn_context @
+       els_context @
+       con_context)
+(* if 3 - 2: 1 else 2  -> let cond_1 = 3 -2 in if cond_1:  1 else 2 *)
   | Num _ -> (e, [])
 
 let rec anf_helper e context =
@@ -112,6 +129,11 @@ let rec compile (e : expr) (env : env) : instruction list =
   | Num n -> [ IMov(Reg(RAX), Const(n)) ]
   | Add1 e -> (compile e env) @ [ IAdd(Reg(RAX), Const (1L)) ]  
   | Sub1 e -> (compile e env) @ [ IAdd(Reg(RAX), Const (-1L)) ]
+  | BinOp (e1, Plus, e2) ->
+     (compile e1 env) @
+     [ IMov (Reg(RBX), Reg(RAX))] @ (* guardarlo *)
+     (compile e2 env) @
+     [ IAdd (Reg(RAX), Reg(RBX))]   (* sumar - cuidado con orden argumentos *)
   | Id name -> let slot = (lookup name env) in
                [ IMov(Reg(RAX), RegOffset(RSP, ~-1 * slot) ) ]
   | Let (x, e, b) ->
